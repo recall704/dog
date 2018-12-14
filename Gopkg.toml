@@ -25,6 +25,14 @@
 #   unused-packages = true
 
 
+[[constraint]]
+  name = "github.com/gin-gonic/gin"
+  version = "1.3.0"
+
+[[constraint]]
+  name = "github.com/recall704/go-ipset"
+  version = "0.1.1"
+
 [prune]
   go-tests = true
   unused-packages = true
