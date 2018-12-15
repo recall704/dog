@@ -1,13 +1,23 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/recall704/dog/src/log"
 	"github.com/recall704/go-ipset/ipset"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
+)
+
+var (
+	ip       = flag.String("ip", "0.0.0.0", "server ip.")
+	port     = flag.Int("port", 5051, "server port.")
+	name     = flag.String("name", "gost", "ipset name")
+	logLevel = flag.String("log_level", "info", "log level")
 )
 
 func main() {
@@ -16,18 +26,21 @@ func main() {
 	r.GET("/del/:ip", HandleIPsetDel)
 	r.GET("/list", HandleGetIPSetList)
 
-	r.Run(":8080")
+	r.Run(fmt.Sprintf("%s:%d", *ip, *port))
 }
 
 var gost *ipset.IPSet
 
 func init() {
+	flag.Parse()
+	log.Init(*logLevel)
+
 	var err error
-	gost, err = ipset.New("gost", "hash:net", &ipset.Params{
+	gost, err = ipset.New(*name, "hash:net", &ipset.Params{
 		Exist: true,
 	})
 	if err != nil {
-		log.Error("get ipset err", err)
+		logrus.Error("get ipset err", err)
 		os.Exit(1)
 	}
 
@@ -45,7 +58,7 @@ func HandleIPsetAdd(c *gin.Context) {
 	}
 
 	if err := gost.Add(ip, 0); err != nil {
-		log.Error("add to ipset error", err)
+		logrus.Error("add to ipset error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "internal error",
 			"err":     err.Error(),
@@ -71,7 +84,7 @@ func HandleIPsetDel(c *gin.Context) {
 	}
 
 	if err := gost.Del(ip); err != nil {
-		log.Error("delete from ipset error", err)
+		logrus.Error("delete from ipset error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "internal error",
 			"err":     err.Error(),
@@ -90,7 +103,7 @@ func HandleGetIPSetList(c *gin.Context) {
 
 	ipList, err := gost.List()
 	if err != nil {
-		log.Error("get ipset list error", err)
+		logrus.Error("get ipset list error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "internal error",
 			"err":     err.Error(),

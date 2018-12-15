@@ -1,2 +1,2 @@
-bin/
-.history
+bin/*
+.history/
